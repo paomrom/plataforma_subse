@@ -1,0 +1,346 @@
+
+library(shiny)
+library(shinydashboard)
+library(shinythemes)
+library(ggplot2)
+library(dplyr)
+library(leaflet)
+library(tidyverse)
+library(DT)
+library(leaflet)
+library(leaflet.extras)
+library(readxl)
+library(data.table)
+library(shinythemes)
+library(tidyr)
+library(plotly)
+library(sf) 
+library(extrafont)
+library(extrafontdb)
+library(showtext)
+library(RColorBrewer)
+library(scales)
+library(lubridate)
+library(ggrepel)
+library(forcats)
+library(readxl)
+library(stringr)
+library(rebus)
+library(scales)
+
+fuentes_Sys <- list.files("~/Library/Fonts/") %>% 
+  str_remove_all(pattern = "." %R% capture(one_or_more(WRD)) %R% END)
+
+
+
+slide2 <- read_excel("CodigoVioleta_bases.xlsx", sheet = "Diapositiva 2")
+slide3 <- read_excel("CodigoVioleta_bases.xlsx", sheet = "Diapositiva 3")
+slide4 <- read_excel("CodigoVioleta_bases.xlsx", sheet = "Diapositiva 4")
+slide5 <- read_excel("CodigoVioleta_bases.xlsx", sheet = "Diapositiva 5")
+slide6 <- read_excel("CodigoVioleta_bases.xlsx", sheet = "Diapositiva 6")
+slide7 <- read_excel("CodigoVioleta_bases.xlsx", sheet = "Diapositiva 7")
+slide8 <- read_excel("CodigoVioleta_bases.xlsx", sheet = "Diapositiva 8")
+slide9 <- read_excel("CodigoVioleta_bases.xlsx", sheet = "Diapositiva 9")
+slide10 <- read_excel("CodigoVioleta_bases.xlsx", sheet = "Diapositiva 10")
+slide11 <- read_excel("CodigoVioleta_bases.xlsx", sheet = "Diapositiva 11")
+slide12 <- read_excel("CodigoVioleta_bases.xlsx", sheet = "Diapositiva 12")
+slide13 <- read_excel("CodigoVioleta_bases.xlsx", sheet = "Diapositiva 13")
+slide14 <- read_excel("CodigoVioleta_bases.xlsx", sheet = "Diapositiva 14")
+slide16<- read_excel("CodigoVioleta_bases.xlsx", sheet = "Diapositiva 16")
+slide19 <- read_excel("CodigoVioleta_bases.xlsx", sheet = "Diapositiva 19")
+slide20 <- read_excel("CodigoVioleta_bases.xlsx", sheet = "Diapositiva 20")
+slide21 <- read_excel("CodigoVioleta_bases.xlsx", sheet = "Diapositiva 21")
+slide22 <- read_excel("CodigoVioleta_bases.xlsx", sheet = "Diapositiva 22")
+slide23 <- read_excel("CodigoVioleta_bases.xlsx", sheet = "Diapositiva 23")
+
+
+
+ui <- navbarPage("Datos abiertos",
+                 theme = shinytheme("flatly"),
+                 navbarMenu("Código Violeta",
+                            tabPanel("Violencia familiar",
+                                     h4("Sitio en construcción - Violencia familiar", alig = "justify")),
+                            tabsetPanel(
+                              tabPanel("Slide 2",
+                                       sidebarLayout(
+                                         sidebarPanel("Seleccione algunas características",
+                                                      selectInput(
+                                                        inputId = "semana", label = "Semana", 
+                     choices = sort(unique(slide2$Semana)),
+                     multiple = TRUE
+                   ),
+                   selectInput(
+                     inputId = "zona", 
+                     label = "Zona", 
+                     choices = sort(unique(slide2$Zona)),
+                     multiple = TRUE
+                   ),
+                   actionButton("execute", label = "Aplicar filtro", icon("fas fa-search-location")),
+                                       
+                                       mainPanel(
+                                         plotlyOutput(outputId = "grafico2", height = 400, width = 850),
+                                         )
+                                       ))),
+                   
+                   tabPanel("Slide 3",
+                            sidebarLayout(
+                              sidebarPanel("Seleccione algunas características",
+                                           selectInput(
+                                             inputId = "semana_3",
+                                             label = "Semana",
+                                             choices = sort(unique(slide3$Semana)),
+                                             multiple = TRUE),
+                                           selectInput(
+                                             inputId = "sexo_3",
+                                             label = "Sexo",
+                                             choices = sort(unique(slide3$Sexo)),
+                                             multiple = TRUE),
+                                           actionButton("execute", label = "Aplicar filtro", icon("fas fa-search-location")),
+                                      
+                                       mainPanel(
+                                         plotlyOutput(outputId = "grafico3", height = 400, width = 850)))
+                            )
+                   )
+                            )
+                 ),
+                              
+                            
+                            
+######################################################################################
+
+                            tabPanel("Violencia contra la mujer",
+                                     h4("Sitio en construcción - violencia vs la mujer", alig = "justify")),
+                            
+
+
+#####################################################################################
+                            tabPanel("Llamadas al 911",
+                                     h4("Sitio en construcción - 911", alig = "justify"))),
+                 
+                 
+                 
+                 tabPanel("Documentación", icon = icon("far fa-file-alt"),
+                                     h2(aling= "center", "Sitio en construcción - Documentación ")),
+                            
+                          
+                 
+                 tabPanel("Descarga",icon = icon("fas fa-cloud-download-alt"),
+                          h2(aling= "center", "Sitio en construcción"),
+                          downloadButton('downloadData', 'Download'))
+)
+
+
+
+# Define server logic required to draw a histogram
+server <- function(input, output, session){
+  
+  #Botones para slide 2    
+  output$semana <- renderUI({
+    selectInput("Semana",
+                label =  "Seleccione semana",
+                choices = sort(unique(slide2$Semana)),
+                multiple = T)
+  })
+  
+  
+  output$zona <- renderUI({
+    selectInput("Zona",
+                label =  "Selecciona la zona",
+                choices = sort(unique(slide2$Zona)),
+                multiple = T)
+  })
+  
+  
+  
+  #base reactiva para slide 2
+  data_slide2 <- reactive({
+    
+    slide2 %>%
+      filter(if(!is.null(input$semana))         Semana %in% input$semana     else Semana != "",
+             if(!is.null(input$zona))             Zona %in% input$zona       else Zona != "",)
+  })
+  
+  
+  output$grafico2 <- renderPlotly ({
+    
+    
+    ggplot(data_slide2()) +
+      aes(x = Semana, y = Total, colour = Zona) +
+      geom_line(size = .8) +
+      geom_point()+
+      scale_y_continuous(labels = scales::comma) +
+      scale_color_manual(values = c(
+        AMG = "#7E3794",
+        Interior = "#C91682",
+        `Puerto Vallarta` = "#D98CBC")) +   
+      labs(title = "Denuncias por violencia familiar", 
+           caption = "Fuente: Elaboración propia con datos de la Fiscalía del estado de Jalisco. 
+Las cifras pueden variar con el tiempo dado que son registros de carpetas de investigación que actualmente siguen en proceso de integración.", 
+           x="Semana", y="Total de denuncias", fill="Zona") +
+      theme_minimal(base_size=15)+
+      theme(text=element_text(size=12,  family="Nutmeg"))+
+      theme(plot.title = element_text(size = 16L, hjust = 0.5), plot.caption = element_text(size = 12L, hjust = 0))->grafico1
+    
+    
+    
+  })
+  
+  
+  
+  #Botones para slide 3    
+  output$semana_3 <- renderUI({
+    selectInput("Semana",
+                label =  "Seleccione semana",
+                choices = sort(unique(slide3$Semana)),
+                multiple = T)
+  })
+  
+  
+  output$sexo_3 <- renderUI({
+    selectInput("Sexo",
+                label =  "Selecciona el sexo",
+                choices = sort(unique(slide3$Sexo)),
+                multiple = T)
+  })
+  
+  
+  
+  #base reactiva para slide 3
+  data_slide3 <- reactive({
+    
+    slide3 %>%
+      filter(if(!is.null(input$semana_3))         Semana %in% input$semana_3     else Semana != "",
+             if(!is.null(input$sexo_3))             Sexo %in% input$sexo_3       else Sexo != "",)
+  })
+  
+  
+  output$grafico3 <- renderPlotly ({
+    
+    
+    ggplot(data_slide3()) +
+      aes(x =as.factor(Semana), fill = Sexo, weight = Total) +
+      geom_bar() +
+      scale_y_continuous(labels = scales::comma) +
+      scale_fill_manual(
+        values = list(
+          Hombres = "#C91682",
+          Mujeres = "#7E3794")) +
+      scale_y_continuous(labels = scales::comma) +
+      labs(title = "Denuncias por violencia familiar desagregado.", 
+           caption = "Fuente: Elaboración propia con datos de la Fiscalía del estado de Jalisco. 
+Las cifras pueden variar con el tiempo dado que son registros de carpetas de investigación que actualmente siguen en proceso de integración.", 
+           fill = "Sexo:",
+           x="Fecha", y="Total") +
+      theme_minimal(base_size=25)+
+      theme(text=element_text(size=12,  family="Nutmeg"))+
+      theme(plot.title = element_text(size = 16L, hjust = 0.5), plot.caption = element_text(size = 12L, hjust = 0))+
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+    
+  })
+  
+  
+  
+  
+  #Botones para slide 4  
+  
+  output$Anio_4 <- renderUI({
+    selectInput("Anio",
+                label =  "Seleccione los Anios",
+                choices = sort(unique(slide4$Anio)),
+                multiple = T)
+  })
+  
+  #base reactiva para slide 4
+  data_slide4 <- reactive({
+    
+    slide4 %>%
+      filter(if(!is.null(input$Anio_4))         Anio %in% input$Anio_4     else Anio != "")
+  })
+  
+  
+  output$grafico4 <- renderPlotly ({
+    
+    ggplot(data_slide4()) +
+      aes(x =as.factor(Anio), weight = Total) + 
+      geom_bar(fill = "#AF1271") +
+      scale_y_continuous(labels = scales::comma) +
+      labs(title = "Denuncias por violencia familiar (anual)", 
+           caption = "Datos al 31 diciembre de 2020.  
+Fuente: Elaboración propia con datos de la Fiscalía del estado de Jalisco.", 
+           fill = "Tipo de violencia:",
+           x="Anio", y="Total") +
+      theme_minimal(base_size=25)+
+      theme(plot.title = element_text(size = 16L, hjust = 0.5), plot.caption = element_text(size = 12L, hjust = 0))+
+      theme(text=element_text(size=12,family="Nutmeg"))->grafico4
+    
+  })
+  
+  ###########
+  
+  #Botones para slide 5  
+  
+  output$Anio_5 <- renderUI({
+    selectInput("Anio",
+                label =  "Seleccione los Anios",
+                choices = sort(unique(slide5$Anio)),
+                multiple = T)
+  })
+  
+  output$mes_5 <- renderUI({
+    selectInput("Mes",
+                label =  "Seleccione mes",
+                choices = sort(unique(slide5$Mes)),
+                multiple = T)
+  })
+  
+  
+  #base reactiva para slide 5
+  data_slide5 <- reactive({
+    
+    slide5 %>%
+      filter(if(!is.null(input$Anio_5))         Anio %in% input$Anio_5     else Anio != "",
+             if(!is.null(input$mes_5))         Anio %in% input$mes_5     else Mes != "",)
+  })
+  
+  
+  output$grafico5 <- renderPlotly ({
+    
+    slide5 <- slide5 %>%
+      mutate(Mes=factor(Mes,
+                        levels=c ("Enero", "Febrero", "Marzo", "Abril", "Mayo",
+                                  "Junio", "Julio", "Agosto", "Septiembre",
+                                  "Octubre", "Noviembre", "Diciembre")),
+             Anio=factor(Anio,
+                         levels=c("2021", "2020", "2019")))
+    
+    
+    ggplot(data_slide5())+ 
+      aes(x=fct_inorder(Mes),  y=Total, fill=as.factor(Anio)) + 
+      geom_bar(width=0.6, stat="identity") + 
+      scale_y_continuous(labels = scales::comma) +
+      scale_fill_manual(values = list(
+        `2019`="#C91682", `2020` = "#7E3794", `2021`="#D98CBC"))+
+      geom_text(aes(label=Total), position = position_stack(vjust = 0.5),
+                vjust=1, hjust=.5, size= 4, color="white")+
+      labs(title = "Denuncias por violencia familiar (comparativo 2019-2020-2021)", 
+           caption = "Información con corte al 30 de abril 2021.
+Fuente:Elaboración propia con datos de la Fiscalía del estado de Jalisco (2020-2021) y del Secretariado Ejecutivo del Sistema Nacional de Seguridad Pública 2019 (SESNSP). 
+Las cifras pueden variar con el tiempo dado que son registros de carpetas de investigación que actualmente siguen en proceso de integración. 
+La unidad de medida son carpetas de investigación.", 
+           x= "Mes", 
+           y= "Número de denuncias", 
+           fill = "Anio") +
+      theme_minimal()+
+      theme(plot.title = element_text(size = 16L, hjust = 0.5, angle = 45), plot.caption = element_text(size = 12L, hjust = 0))+
+      theme(text=element_text(size=12,family="Nutmeg"))->grafico5
+    
+  })
+  
+  
+  
+  
+}
+
+shinyApp(ui = ui, server = server)
+# Run the application 
+shinyApp(ui = ui, server = server)

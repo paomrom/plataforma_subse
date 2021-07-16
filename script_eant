@@ -511,7 +511,8 @@ ui <- navbarPage("Datos abiertos",
                  
                  
                  tabPanel("Descarga",icon = icon("fas fa-cloud-download-alt"),
-                          dataTableOutput(outputId = "datatable"))                 
+                          downloadButton('downloadData', 'Download'),
+                          dataTableOutput(outputId = "table1"))                 
 )
 
 
@@ -534,13 +535,18 @@ ui <- navbarPage("Datos abiertos",
 
 server <- function(input, output, session){
   
-  output$my_datatable <- DT::renderDataTable({
-    DT::datatable(slide2())
-  })
+  output$table1 <- DT::renderDataTable({
+    slide2
+  }, filter='top', 
+  options = list(pageLength = 10, scrollX=TRUE, autoWidth = TRUE))
   
-  output$datatable <- DT::renderDataTable({
-    DT::datatable(slide10())
-  })
+  ## Download Buttons ----
+  output$downloadData <- downloadHandler(
+    filename = 'Download.csv',
+    content = function(file) {
+      write.csv(Data[input[["table1_rows_all"]],], file, row.names = FALSE)
+    }
+  )
 
 
   
